@@ -57,48 +57,69 @@
   <div id="progress-container">
     <div id="progress-bar">0%</div>
   </div>
-  <p id="total">You've drunk 0 ml today</p>
+<p id="total">You've drunk 0 ml today</p>
 
-  <input type="number" id="waterInput" placeholder="ml" />
-  <button onclick="addWater()">Add</button>
-  <button onclick="resetWater()">Reset</button>
+<label for="goalSlider">Goal: <span id="goalLabel">2000</span> ml</label><br />
+<input type="range" id="goalSlider" min="1000" max="4000" step="100" value="2000" />
 
-  <script>
-    const goal = 2000; // ml per day goal
-    let total = parseInt(localStorage.getItem('waterTotal')) || 0;
-    const today = new Date().toDateString();
-    if (localStorage.getItem('lastDate') !== today) {
-      total = 0;
-      localStorage.setItem('lastDate', today);
-    }
+<br><br>
+<input type="number" id="waterInput" placeholder="ml" />
+<button onclick="addWater()">Add</button>
+<button onclick="resetWater()">Reset</button>
 
-    function updateUI() {
-      document.getElementById('total').innerText = `You've drunk ${total} ml today`;
-      let percent = Math.min((total / goal) * 100, 100);
-      document.getElementById('progress-bar').style.width = percent + '%';
-      document.getElementById('progress-bar').innerText = Math.floor(percent) + '%';
-    }
+<script>
+  // Load saved goal or default to 2000
+  let goal = parseInt(localStorage.getItem('waterGoal')) || 2000;
+  let total = parseInt(localStorage.getItem('waterTotal')) || 0;
+  const today = new Date().toDateString();
+  if (localStorage.getItem('lastDate') !== today) {
+    total = 0;
+    localStorage.setItem('lastDate', today);
+  }
 
-    function addWater() {
-      let input = document.getElementById('waterInput');
-      let amount = parseInt(input.value);
-      if (!isNaN(amount) && amount > 0) {
-        total += amount;
-        localStorage.setItem('waterTotal', total);
-        updateUI();
-        input.value = '';
-      }
-    }
+  // DOM Elements
+  const totalEl = document.getElementById('total');
+  const progressBar = document.getElementById('progress-bar');
+  const goalLabel = document.getElementById('goalLabel');
+  const goalSlider = document.getElementById('goalSlider');
 
-    function resetWater() {
-      if (confirm("Reset today's total?")) {
-        total = 0;
-        localStorage.setItem('waterTotal', 0);
-        updateUI();
-      }
-    }
+  goalSlider.value = goal;
+  goalLabel.innerText = goal;
 
+  goalSlider.addEventListener('input', () => {
+    goal = parseInt(goalSlider.value);
+    goalLabel.innerText = goal;
+    localStorage.setItem('waterGoal', goal);
     updateUI();
-  </script>
+  });
+
+  function updateUI() {
+    totalEl.innerText = `You've drunk ${total} ml today`;
+    let percent = Math.min((total / goal) * 100, 100);
+    progressBar.style.width = percent + '%';
+    progressBar.innerText = Math.floor(percent) + '%';
+  }
+
+  function addWater() {
+    let input = document.getElementById('waterInput');
+    let amount = parseInt(input.value);
+    if (!isNaN(amount) && amount > 0) {
+      total += amount;
+      localStorage.setItem('waterTotal', total);
+      updateUI();
+      input.value = '';
+    }
+  }
+
+  function resetWater() {
+    if (confirm("Reset today's total?")) {
+      total = 0;
+      localStorage.setItem('waterTotal', 0);
+      updateUI();
+    }
+  }
+
+  updateUI();
+</script>
 </body>
 </html>
