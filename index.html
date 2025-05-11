@@ -8,21 +8,48 @@
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      padding: 20px;
+      padding: 0;
+      margin: 0;
       background: #e0f7fa;
     }
-    h1 {
-      color: #00796b;
+    header {
+      background: #00796b;
+      color: white;
+      padding: 15px;
+      font-size: 24px;
+    }
+    nav {
+      display: flex;
+      justify-content: space-around;
+      background: #004d40;
+    }
+    nav button {
+      flex: 1;
+      padding: 12px;
+      background: #004d40;
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    nav button.active {
+      background: #00796b;
+      font-weight: bold;
+    }
+    .tab {
+      display: none;
+      padding: 20px;
+    }
+    .tab.active {
+      display: block;
     }
     #progress-container {
       background: #b2dfdb;
       border-radius: 30px;
       overflow: hidden;
       height: 30px;
-      margin: 20px 0;
+      margin: 20px auto;
       max-width: 400px;
-      margin-left: auto;
-      margin-right: auto;
     }
     #progress-bar {
       background: #00796b;
@@ -38,88 +65,137 @@
       border-radius: 8px;
       font-size: 16px;
     }
-    input {
-      width: 80px;
+    input[type="range"] {
+      width: 90%;
+      margin-top: 10px;
     }
-    button {
-      background: #00796b;
-      color: white;
-      cursor: pointer;
-    }
-    #total {
+    #goalLabel {
+      font-weight: bold;
       font-size: 20px;
-      margin: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>💧 Water Tracker</h1>
-  <div id="progress-container">
-    <div id="progress-bar">0%</div>
+  <header>💧 Water Tracker</header>
+
+  <nav>
+    <button onclick="switchTab('tracker')" class="active">Tracker</button>
+    <button onclick="switchTab('history')">History</button>
+    <button onclick="switchTab('settings')">Settings</button>
+  </nav>
+
+  <!-- Tracker Tab -->
+  <div id="tracker" class="tab active">
+    <div id="progress-container">
+      <div id="progress-bar">0%</div>
+    </div>
+    <p id="total">You've drunk 0 ml today</p>
+    <input type="number" id="waterInput" placeholder="ml" />
+    <button onclick="addWater()">Add</button>
+    <button onclick="resetWater()">Reset</button>
   </div>
-<p id="total">You've drunk 0 ml today</p>
 
-<label for="goalSlider">Goal: <span id="goalLabel">2000</span> ml</label><br />
-<input type="range" id="goalSlider" min="1000" max="4000" step="100" value="2000" />
+  <!-- History Tab -->
+  <div id="history" class="tab">
+    <h3>Water Intake History</h3>
+    <ul id="historyList"></ul>
+  </div>
 
-<br><br>
-<input type="number" id="waterInput" placeholder="ml" />
-<button onclick="addWater()">Add</button>
-<button onclick="resetWater()">Reset</button>
+  <!-- Settings Tab -->
+  <div id="settings" class="tab">
+    <h3>Daily Goal</h3>
+    <label for="goalSlider">Goal: <span id="goalLabel">2000</span> ml</label><br />
+    <input type="range" id="goalSlider" min="1000" max="4000" step="100" value="2000" />
+  </div>
 
-<script>
-  // Load saved goal or default to 2000
-  let goal = parseInt(localStorage.getItem('waterGoal')) || 2000;
-  let total = parseInt(localStorage.getItem('waterTotal')) || 0;
-  const today = new Date().toDateString();
-  if (localStorage.getItem('lastDate') !== today) {
-    total = 0;
-    localStorage.setItem('lastDate', today);
-  }
+  <script>
+    // Initial load
+    let goal = parseInt(localStorage.getItem('waterGoal')) || 2000;
+    let total = parseInt(localStorage.getItem('waterTotal')) || 0;
+    let history = JSON.parse(localStorage.getItem('waterHistory')) || {};
+    const today = new Date().toDateString();
 
-  // DOM Elements
-  const totalEl = document.getElementById('total');
-  const progressBar = document.getElementById('progress-bar');
-  const goalLabel = document.getElementById('goalLabel');
-  const goalSlider = document.getElementById('goalSlider');
-
-  goalSlider.value = goal;
-  goalLabel.innerText = goal;
-
-  goalSlider.addEventListener('input', () => {
-    goal = parseInt(goalSlider.value);
-    goalLabel.innerText = goal;
-    localStorage.setItem('waterGoal', goal);
-    updateUI();
-  });
-
-  function updateUI() {
-    totalEl.innerText = `You've drunk ${total} ml today`;
-    let percent = Math.min((total / goal) * 100, 100);
-    progressBar.style.width = percent + '%';
-    progressBar.innerText = Math.floor(percent) + '%';
-  }
-
-  function addWater() {
-    let input = document.getElementById('waterInput');
-    let amount = parseInt(input.value);
-    if (!isNaN(amount) && amount > 0) {
-      total += amount;
-      localStorage.setItem('waterTotal', total);
-      updateUI();
-      input.value = '';
-    }
-  }
-
-  function resetWater() {
-    if (confirm("Reset today's total?")) {
+    if (localStorage.getItem('lastDate') !== today) {
+      if (localStorage.getItem('lastDate') && total > 0) {
+        history[localStorage.getItem('lastDate')] = total;
+        localStorage.setItem('waterHistory', JSON.stringify(history));
+      }
       total = 0;
-      localStorage.setItem('waterTotal', 0);
-      updateUI();
+      localStorage.setItem('lastDate', today);
     }
-  }
 
-  updateUI();
-</script>
+    // DOM references
+    const totalEl = document.getElementById('total');
+    const progressBar = document.getElementById('progress-bar');
+    const goalLabel = document.getElementById('goalLabel');
+    const goalSlider = document.getElementById('goalSlider');
+    const historyList = document.getElementById('historyList');
+
+    goalSlider.value = goal;
+    goalLabel.innerText = goal;
+
+    goalSlider.addEventListener('input', () => {
+      goal = parseInt(goalSlider.value);
+      goalLabel.innerText = goal;
+      localStorage.setItem('waterGoal', goal);
+      updateUI();
+    });
+
+    function updateUI() {
+      totalEl.innerText = `You've drunk ${total} ml today`;
+      let percent = Math.min((total / goal) * 100, 100);
+      progressBar.style.width = percent + '%';
+      progressBar.innerText = Math.floor(percent) + '%';
+    }
+
+    function addWater() {
+      const input = document.getElementById('waterInput');
+      let amount = parseInt(input.value);
+      if (!isNaN(amount) && amount > 0) {
+        total += amount;
+        localStorage.setItem('waterTotal', total);
+        updateUI();
+        input.value = '';
+      }
+    }
+
+    function resetWater() {
+      if (confirm("Reset today's total?")) {
+        total = 0;
+        localStorage.setItem('waterTotal', 0);
+        updateUI();
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('nav button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.getElementById(tabId).classList.add('active');
+      document.querySelector(`nav button[onclick="switchTab('${tabId}')"]`).classList.add('active');
+
+      if (tabId === 'history') renderHistory();
+    }
+
+    function renderHistory() {
+      historyList.innerHTML = '';
+      const allHistory = JSON.parse(localStorage.getItem('waterHistory')) || {};
+      const entries = Object.entries(allHistory).reverse();
+      if (entries.length === 0) {
+        historyList.innerHTML = '<li>No history yet</li>';
+      } else {
+        entries.forEach(([date, amount]) => {
+          const li = document.createElement('li');
+          li.textContent = `${date}: ${amount} ml`;
+          historyList.appendChild(li);
+        });
+      }
+    }
+
+    updateUI();
+  </script>
 </body>
 </html>
