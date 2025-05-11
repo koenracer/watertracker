@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Water Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background: #e0f7fa;
+    }
+    h1 {
+      color: #00796b;
+    }
+    #progress-container {
+      background: #b2dfdb;
+      border-radius: 30px;
+      overflow: hidden;
+      height: 30px;
+      margin: 20px 0;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #progress-bar {
+      background: #00796b;
+      height: 100%;
+      width: 0%;
+      color: white;
+      line-height: 30px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    input {
+      width: 80px;
+    }
+    button {
+      background: #00796b;
+      color: white;
+      cursor: pointer;
+    }
+    #total {
+      font-size: 20px;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>💧 Water Tracker</h1>
+  <div id="progress-container">
+    <div id="progress-bar">0%</div>
+  </div>
+  <p id="total">You've drunk 0 ml today</p>
+
+  <input type="number" id="waterInput" placeholder="ml" />
+  <button onclick="addWater()">Add</button>
+  <button onclick="resetWater()">Reset</button>
+
+  <script>
+    const goal = 2000; // ml per day goal
+    let total = parseInt(localStorage.getItem('waterTotal')) || 0;
+    const today = new Date().toDateString();
+    if (localStorage.getItem('lastDate') !== today) {
+      total = 0;
+      localStorage.setItem('lastDate', today);
+    }
+
+    function updateUI() {
+      document.getElementById('total').innerText = `You've drunk ${total} ml today`;
+      let percent = Math.min((total / goal) * 100, 100);
+      document.getElementById('progress-bar').style.width = percent + '%';
+      document.getElementById('progress-bar').innerText = Math.floor(percent) + '%';
+    }
+
+    function addWater() {
+      let input = document.getElementById('waterInput');
+      let amount = parseInt(input.value);
+      if (!isNaN(amount) && amount > 0) {
+        total += amount;
+        localStorage.setItem('waterTotal', total);
+        updateUI();
+        input.value = '';
+      }
+    }
+
+    function resetWater() {
+      if (confirm("Reset today's total?")) {
+        total = 0;
+        localStorage.setItem('waterTotal', 0);
+        updateUI();
+      }
+    }
+
+    updateUI();
+  </script>
+</body>
+</html>
