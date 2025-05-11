@@ -23,6 +23,12 @@
       justify-content: space-around;
       background: #004d40;
     }
+    #progress-circle {
+      margin: 30px auto;
+      width: 160px;
+      height: 160px;
+    }
+
     nav button {
       flex: 1;
       padding: 12px;
@@ -86,9 +92,15 @@
 
   <!-- Tracker Tab -->
   <div id="tracker" class="tab active">
-    <div id="progress-container">
-      <div id="progress-bar">0%</div>
+    <div id="progress-circle">
+      <svg width="160" height="160">
+        <circle cx="80" cy="80" r="70" stroke="#b2dfdb" stroke-width="15" fill="none"/>
+        <circle id="progressRing" cx="80" cy="80" r="70" stroke="#00796b" stroke-width="15" fill="none"
+                stroke-linecap="round" stroke-dasharray="439.82" stroke-dashoffset="439.82" transform="rotate(-90 80 80)" />
+        <text id="percentText" x="80" y="90" text-anchor="middle" font-size="24" fill="#00796b">0%</text>
+      </svg>
     </div>
+
     <p id="total">You've drunk 0 ml today</p>
     <input type="number" id="waterInput" placeholder="ml" />
     <button onclick="addWater()">Add</button>
