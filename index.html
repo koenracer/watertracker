@@ -79,6 +79,31 @@
       font-weight: bold;
       font-size: 20px;
     }
+    /* Animate pulse on progress circle */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .pulse {
+      animation: pulse 0.4s ease-in-out;
+    }
+    
+    /* Floating emoji animation */
+    @keyframes floatDrop {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-60px); }
+    }
+    .floating-drop {
+      position: absolute;
+      font-size: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: floatDrop 1s ease-out forwards;
+      pointer-events: none;
+      z-index: 100;
+    }
+
   </style>
 </head>
 <body>
@@ -173,8 +198,21 @@
         localStorage.setItem('waterTotal', total);
         updateUI();
         input.value = '';
+    
+        // Animate progress ring pulse
+        const ring = document.getElementById("progressRing");
+        ring.classList.add("pulse");
+        setTimeout(() => ring.classList.remove("pulse"), 400);
+    
+        // Add floating drop
+        const drop = document.createElement('div');
+        drop.className = 'floating-drop';
+        drop.innerText = '💧';
+        document.getElementById('animationContainer').appendChild(drop);
+        setTimeout(() => drop.remove(), 1000);
       }
     }
+
 
     function resetWater() {
       if (confirm("Reset today's total?")) {
@@ -214,5 +252,6 @@
 
     updateUI();
   </script>
+  <div id="animationContainer" style="position: relative; height: 0;"></div>
 </body>
 </html>
