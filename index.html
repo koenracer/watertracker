@@ -156,9 +156,14 @@
     function updateUI() {
       totalEl.innerText = `You've drunk ${total} ml today`;
       let percent = Math.min((total / goal) * 100, 100);
-      progressBar.style.width = percent + '%';
-      progressBar.innerText = Math.floor(percent) + '%';
+      const ring = document.getElementById("progressRing");
+      const percentText = document.getElementById("percentText");
+      const circleLength = 2 * Math.PI * 70;
+      const offset = circleLength - (percent / 100) * circleLength;
+      ring.style.strokeDashoffset = offset;
+      percentText.textContent = Math.floor(percent) + "%";
     }
+
 
     function addWater() {
       const input = document.getElementById('waterInput');
