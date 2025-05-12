@@ -5,6 +5,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#00796b">
   <link rel="apple-touch-icon" href="icon-192.png">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -140,8 +142,9 @@
   <!-- History Tab -->
 <div id="history" class="tab-content">
   <h2>History</h2>
-  <ul id="historyList" class="text-left text-sm list-disc ml-5"></ul>
+  <canvas id="historyChart" width="400" height="250"></canvas>
 </div>
+
 
 
   <!-- Settings Tab -->
@@ -191,7 +194,41 @@
       localStorage.setItem('waterGoal', goal);
       updateUI();
     });
+    
+    let chart;
+    
+    function renderChart() {
+      const ctx = document.getElementById('historyChart').getContext('2d');
+      const history = JSON.parse(localStorage.getItem('waterHistory')) || {};
+      const sortedDates = Object.keys(history).sort().reverse().slice(0, 7).reverse();
+    
+      const labels = sortedDates.map(date => date.slice(5)); // Show MM-DD
+      const data = sortedDates.map(date => history[date]);
+    
+      if (chart) chart.destroy(); // avoid duplicates
+    
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'ml per day',
+            data: data,
+            backgroundColor: '#4dd0e1'
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 500 }
+            }
+          }
+        }
+      });
+    }
 
+    
     function updateUI() {
       totalEl.innerText = `You've drunk ${total} ml today`;
       let percent = Math.min((total / goal) * 100, 100);
@@ -252,11 +289,9 @@
       document.getElementById(tabId).classList.add('active');
       document.querySelector(`nav button[onclick="switchTab('${tabId}')"]`).classList.add('active');
 
-      if (tabId === 'history') renderHistory();
-      if (tab === 'history') {
-        loadHistory();
-      }
-
+        if (tab === 'history') {
+          renderChart();
+        }
     }
 
     function renderHistory() {
