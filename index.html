@@ -138,10 +138,11 @@
   </div>
 
   <!-- History Tab -->
-  <div id="history" class="tab">
-    <h3>Water Intake History</h3>
-    <ul id="historyList"></ul>
-  </div>
+<div id="history" class="tab-content">
+  <h2>History</h2>
+  <ul id="historyList" class="text-left text-sm list-disc ml-5"></ul>
+</div>
+
 
   <!-- Settings Tab -->
   <div id="settings" class="tab">
@@ -151,6 +152,14 @@
   </div>
 
   <script>
+    const today = new Date().toISOString().split('T')[0];
+    let lastDate = localStorage.getItem('lastDate');
+    if (lastDate !== today) {
+      localStorage.setItem('lastDate', today);
+      total = 0;
+      localStorage.setItem('waterTotal', 0);
+    }
+
     // Initial load
     let goal = parseInt(localStorage.getItem('waterGoal')) || 2000;
     let total = parseInt(localStorage.getItem('waterTotal')) || 0;
@@ -200,16 +209,22 @@
       let amount = parseInt(input.value);
       if (!isNaN(amount) && amount > 0) {
         total += amount;
+    
+        const today = new Date().toISOString().split('T')[0]; // e.g., "2025-05-11"
+        let history = JSON.parse(localStorage.getItem('waterHistory')) || {};
+        history[today] = (history[today] || 0) + amount;
+        localStorage.setItem('waterHistory', JSON.stringify(history));
+    
         localStorage.setItem('waterTotal', total);
         updateUI();
+    
         input.value = '';
     
-        // Animate progress ring pulse
+        // Animation
         const ring = document.getElementById("progressRing");
         ring.classList.add("pulse");
         setTimeout(() => ring.classList.remove("pulse"), 400);
     
-        // Add floating drop
         const drop = document.createElement('div');
         drop.className = 'floating-drop';
         drop.innerText = '💧';
@@ -238,6 +253,10 @@
       document.querySelector(`nav button[onclick="switchTab('${tabId}')"]`).classList.add('active');
 
       if (tabId === 'history') renderHistory();
+      if (tab === 'history') {
+        loadHistory();
+      }
+
     }
 
     function renderHistory() {
@@ -254,6 +273,19 @@
         });
       }
     }
+    function loadHistory() {
+      const history = JSON.parse(localStorage.getItem('waterHistory')) || {};
+      const list = document.getElementById('historyList');
+      list.innerHTML = '';
+      const sortedDates = Object.keys(history).sort().reverse();
+    
+      sortedDates.slice(0, 7).forEach(date => {
+        const item = document.createElement('li');
+        item.textContent = `${date}: ${history[date]} ml`;
+        list.appendChild(item);
+      });
+    }
+
 
     updateUI();
       
