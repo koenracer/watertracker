@@ -3,32 +3,41 @@
 <head>
   <link rel="manifest" href="manifest.json" />
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#00796b">
+  <meta name="theme-color" content="#1565c0">
   <link rel="apple-touch-icon" href="icon-192.png">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Water Tracker</title>
   <style>
+    :root {
+      --primary-color: #1565c0;
+      --secondary-color: #5e92f3;
+      --background-color: #e3f2fd;
+      --text-color: #ffffff;
+      --accent-color: #2196f3;
+    }
+
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
       text-align: center;
       padding: 0;
       margin: 0;
-      background: #e0f7fa;
+      background: var(--background-color);
+      color: #333;
     }
     header {
-      background: #00796b;
-      color: white;
+      background: var(--primary-color);
+      color: var(--text-color);
       padding: 15px;
       font-size: 24px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     nav {
       display: flex;
       justify-content: space-around;
-      background: #004d40;
+      background: var(--secondary-color);
     }
     #progress-circle {
       margin: 30px auto;
@@ -39,14 +48,16 @@
     nav button {
       flex: 1;
       padding: 12px;
-      background: #004d40;
+      background: var(--secondary-color);
       border: none;
-      color: white;
+      color: var(--text-color);
       font-size: 16px;
       cursor: pointer;
+      transition: background 0.3s ease;
+      border-radius: 0;
     }
     nav button.active {
-      background: #00796b;
+      background: var(--primary-color);
       font-weight: bold;
     }
     .tab {
@@ -57,7 +68,7 @@
       display: block;
     }
     #progress-container {
-      background: #b2dfdb;
+      background: #bbdefb;
       border-radius: 30px;
       overflow: hidden;
       height: 30px;
@@ -65,7 +76,7 @@
       max-width: 400px;
     }
     #progress-bar {
-      background: #00796b;
+      background: var(--primary-color);
       height: 100%;
       width: 0%;
       color: white;
@@ -75,18 +86,37 @@
       padding: 10px;
       margin: 10px;
       border: none;
-      border-radius: 8px;
+      border-radius: 20px;
       font-size: 16px;
+      transition: background 0.3s ease, transform 0.1s ease;
+    }
+    .preset-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .preset-buttons button {
+      background: var(--accent-color);
+      color: white;
+      padding: 10px 15px;
+      cursor: pointer;
+    }
+    .preset-buttons button:hover {
+      background: var(--primary-color);
+      transform: scale(1.05);
     }
     input[type="range"] {
       width: 90%;
       margin-top: 10px;
+      accent-color: var(--primary-color);
     }
     #goalLabel {
       font-weight: bold;
       font-size: 20px;
+      color: var(--primary-color);
     }
-    /* Animate pulse on progress circle */
+    /* Existing animations remain the same */
     @keyframes pulse {
       0% { transform: scale(1); }
       50% { transform: scale(1.1); }
@@ -96,7 +126,6 @@
       animation: pulse 0.4s ease-in-out;
     }
     
-    /* Floating emoji animation */
     @keyframes floatDrop {
       0% { opacity: 1; transform: translateY(0); }
       100% { opacity: 0; transform: translateY(-60px); }
@@ -110,7 +139,6 @@
       pointer-events: none;
       z-index: 100;
     }
-
   </style>
 </head>
 <body>
@@ -126,26 +154,31 @@
   <div id="tracker" class="tab active">
     <div id="progress-circle">
       <svg width="160" height="160">
-        <circle cx="80" cy="80" r="70" stroke="#b2dfdb" stroke-width="15" fill="none"/>
-        <circle id="progressRing" cx="80" cy="80" r="70" stroke="#00796b" stroke-width="15" fill="none"
+        <circle cx="80" cy="80" r="70" stroke="#bbdefb" stroke-width="15" fill="none"/>
+        <circle id="progressRing" cx="80" cy="80" r="70" stroke="#1565c0" stroke-width="15" fill="none"
                 stroke-linecap="round" stroke-dasharray="439.82" stroke-dashoffset="439.82" transform="rotate(-90 80 80)" />
-        <text id="percentText" x="80" y="90" text-anchor="middle" font-size="24" fill="#00796b">0%</text>
+        <text id="percentText" x="80" y="90" text-anchor="middle" font-size="24" fill="#1565c0">0%</text>
       </svg>
     </div>
 
     <p id="total">You've drunk 0 ml today</p>
+    
+    <div class="preset-buttons">
+      <button onclick="setPresetWater(200)">200 ml</button>
+      <button onclick="setPresetWater(500)">500 ml</button>
+      <button onclick="setPresetWater(1000)">1000 ml</button>
+    </div>
+
     <input type="number" id="waterInput" placeholder="ml" />
     <button onclick="addWater()">Add</button>
     <button onclick="resetWater()">Reset</button>
   </div>
 
   <!-- History Tab -->
-<div id="history" class="tab-content">
-  <h2>History</h2>
-  <canvas id="historyChart" width="400" height="250"></canvas>
-</div>
-
-
+  <div id="history" class="tab">
+    <h2>History</h2>
+    <canvas id="historyChart" width="400" height="250"></canvas>
+  </div>
 
   <!-- Settings Tab -->
   <div id="settings" class="tab">
@@ -167,15 +200,15 @@
     let goal = parseInt(localStorage.getItem('waterGoal')) || 2000;
     let total = parseInt(localStorage.getItem('waterTotal')) || 0;
     let history = JSON.parse(localStorage.getItem('waterHistory')) || {};
-    const today = new Date().toDateString();
+    const todayString = new Date().toDateString();
 
-    if (localStorage.getItem('lastDate') !== today) {
+    if (localStorage.getItem('lastDate') !== todayString) {
       if (localStorage.getItem('lastDate') && total > 0) {
         history[localStorage.getItem('lastDate')] = total;
         localStorage.setItem('waterHistory', JSON.stringify(history));
       }
       total = 0;
-      localStorage.setItem('lastDate', today);
+      localStorage.setItem('lastDate', todayString);
     }
 
     // DOM references
@@ -214,7 +247,7 @@
           datasets: [{
             label: 'ml per day',
             data: data,
-            backgroundColor: '#4dd0e1'
+            backgroundColor: '#2196f3'
           }]
         },
         options: {
@@ -228,6 +261,11 @@
       });
     }
 
+    function setPresetWater(amount) {
+      const input = document.getElementById('waterInput');
+      input.value = amount;
+      addWater();
+    }
     
     function updateUI() {
       totalEl.innerText = `You've drunk ${total} ml today`;
@@ -239,7 +277,6 @@
       ring.style.strokeDashoffset = offset;
       percentText.textContent = Math.floor(percent) + "%";
     }
-
 
     function addWater() {
       const input = document.getElementById('waterInput');
@@ -270,7 +307,6 @@
       }
     }
 
-
     function resetWater() {
       if (confirm("Reset today's total?")) {
         total = 0;
@@ -289,38 +325,10 @@
       document.getElementById(tabId).classList.add('active');
       document.querySelector(`nav button[onclick="switchTab('${tabId}')"]`).classList.add('active');
 
-        if (tab === 'history') {
-          renderChart();
-        }
-    }
-
-    function renderHistory() {
-      historyList.innerHTML = '';
-      const allHistory = JSON.parse(localStorage.getItem('waterHistory')) || {};
-      const entries = Object.entries(allHistory).reverse();
-      if (entries.length === 0) {
-        historyList.innerHTML = '<li>No history yet</li>';
-      } else {
-        entries.forEach(([date, amount]) => {
-          const li = document.createElement('li');
-          li.textContent = `${date}: ${amount} ml`;
-          historyList.appendChild(li);
-        });
+      if (tabId === 'history') {
+        renderChart();
       }
     }
-    function loadHistory() {
-      const history = JSON.parse(localStorage.getItem('waterHistory')) || {};
-      const list = document.getElementById('historyList');
-      list.innerHTML = '';
-      const sortedDates = Object.keys(history).sort().reverse();
-    
-      sortedDates.slice(0, 7).forEach(date => {
-        const item = document.createElement('li');
-        item.textContent = `${date}: ${history[date]} ml`;
-        list.appendChild(item);
-      });
-    }
-
 
     updateUI();
       
@@ -329,7 +337,6 @@
         console.log('Service Worker registered!');
       });
     }
-
   </script>
   <div id="animationContainer" style="position: relative; height: 0;"></div>
 </body>
